@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use DB;
 use Illuminate\Http\Request;
 
 class JobController extends Controller
@@ -65,9 +66,11 @@ class JobController extends Controller
      */
     public function edit(Request $request, $id)
     {
-        $job = Job::find($id);
-        //$request_data = $request->getContent();
-        if (!$job) {
+        // $job = Job::find($id);
+        // //$request_data = $request->getContent();
+        $subJob = Job::where('_id', $id)->first(); 
+
+        if (!$subJob) {
             return response()->json(['message' => 'Job not found'], 404);
         }
 
@@ -83,16 +86,41 @@ class JobController extends Controller
             'company.contactPhone' => 'sometimes|string',
         ]);
 
-        $job->title = $request['title'];
-        $job->type = '12312312';
-        $job->update();
-        $jobUpdate = Job::find($request['_id'])->update(['title' => $request['title']]);
+        // $job->title = $request['title'];
+        // $job->type = '12312312';
+        // $job->update();
+       
+        // $jobUpdate = Job::find($id)->update([
+        //     'title' => $request['title'],
+        //     'type' => $request['type']
+        // ]);
         // $jobUpdate->title = $request['title'];
         // dd($jobUpdate);
         // $jobUpdate->save();
         //    $res =  $jobUpdate->save(['title' => '12312312312']);
         // $res = $jobUpdate->update(['title' => $request['title']]);
-        return response()->json(data: $jobUpdate);
+
+       
+
+        $subJob->title= $request->title;
+        $subJob->type = $request->type;
+        $subJob->description = $request->description;
+        $subJob->location = $request->location;
+        $subJob->salary = $request->salary;
+        if ($request->has('company')) {
+            $company = $subJob->company ?? []; // Lấy giá trị hiện tại (hoặc mảng rỗng nếu chưa có)
+            $company['name'] = $request->input('company.name', $company['name'] ?? null);
+            $company['description'] = $request->input('company.description', $company['description'] ?? null);
+            $company['contactEmail'] = $request->input('company.contactEmail', $company['contactEmail'] ?? null);
+            $company['contactPhone'] = $request->input('company.contactPhone', $company['contactPhone'] ?? null);
+
+            // Gán lại giá trị vào `company`
+            $subJob->company = $company;
+        }
+
+        $subJob->save();
+        
+        return response()->json(data: $subJob);
     }
 
     /**
